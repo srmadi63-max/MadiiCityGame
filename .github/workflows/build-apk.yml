@@ -1,33 +1,28 @@
 name: Build MadiiCity APK
-on:
-  workflow_dispatch:
-
+on: workflow_dispatch
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-python@v5
         with:
-          node-version: 18
+          python-version: '3.11'
       - uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: 17
-      - uses: android-actions/setup-android@v3
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y python3-pip zip unzip openjdk-17-jdk libncurses5 libstdc++6 libffi-dev libssl-dev
+          pip install --upgrade pip
+          pip install buildozer cython==0.29.36
       - name: Build APK
         run: |
-          npm init -y
-          npm install @capacitor/core @capacitor/cli @capacitor/android
-          npx cap init "MadiiCityGame" "com.madii.citygame" --web-dir="."
-          npx cap add android
-          mkdir -p www
-          cp index.html www/index.html
-          npx cap copy android
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug
-      - uses: actions/upload-artifact@v4
+          yes | buildozer android debug
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
-          name: MadiiCityGame-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: MadiiCity-APK
+          path: bin/*.apk
